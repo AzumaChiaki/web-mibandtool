@@ -1,197 +1,61 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 1.0.0)'
+        description: 'Release Version (e.g., 1.0.0)'
         required: true
         type: string
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    
+  build-and-release:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            command: npm run dist:mac
+            artifact_path: dist/*.dmg
+          - os: windows-latest
+            command: npm run dist:win
+            artifact_path: dist/*.exe
+          - os: ubuntu-latest
+            command: npm run dist:linux
+            artifact_path: dist/*.AppImage
+
     steps:
-    - name: Get version
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
-        else
-          VERSION="${{ github.ref_name }}"
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      run: |
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-    - name: Checkout repository
-      run: |
-        git init
-        git remote add origin https://github.com/${{ github.repository }}.git
-        git fetch origin ${{ github.ref_name }}
-        git checkout ${{ github.ref_name }}
+      - name: Update package.json version
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        shell: bash
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm install
 
-    - name: Build for Linux
-      run: npm run dist:linux
+      - name: Build Application
+        run: ${{ matrix.command }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload Linux artifact
-      run: |
-        mkdir -p uploads
-        cp dist/*.{AppImage,deb,rpm,snap} uploads/ 2>/dev/null || true
-
-    - name: Save Linux files
-      run: |
-        tar -czf linux-files.tar.gz uploads/
-
-  build-windows:
-    runs-on: windows-latest
-    
-    steps:
-    - name: Get version
-      run: |
-        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-          echo "VERSION=${{ github.event.inputs.version }}" >> $env:GITHUB_ENV
-        } else {
-          echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_ENV
-        }
-
-    - name: Setup Node.js
-      run: |
-        Invoke-WebRequest -Uri "https://nodejs.org/dist/v18.19.0/node-v18.19.0-x64.msi" -OutFile "node.msi"
-        Start-Process msiexec.exe -ArgumentList "/i node.msi /quiet" -Wait
-
-    - name: Checkout repository
-      run: |
-        git init
-        git remote add origin https://github.com/${{ github.repository }}.git
-        git fetch origin ${{ github.ref_name }}
-        git checkout ${{ github.ref_name }}
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build for Windows
-      run: npm run dist:win
-
-    - name: Upload Windows artifact
-      run: |
-        mkdir uploads
-        copy dist\*.exe uploads\ 2>nul
-        copy dist\*.msi uploads\ 2>nul
-
-    - name: Save Windows files
-      run: |
-        tar -czf windows-files.tar.gz uploads/
-
-  build-macos:
-    runs-on: macos-latest
-    
-    steps:
-    - name: Get version
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
-        else
-          VERSION="${{ github.ref_name }}"
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-    - name: Setup Node.js
-      run: |
-        curl -fsSL https://nodejs.org/dist/v18.19.0/node-v18.19.0.pkg -o node.pkg
-        sudo installer -pkg node.pkg -target /
-
-    - name: Checkout repository
-      run: |
-        git init
-        git remote add origin https://github.com/${{ github.repository }}.git
-        git fetch origin ${{ github.ref_name }}
-        git checkout ${{ github.ref_name }}
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build for macOS
-      run: npm run dist:mac
-
-    - name: Upload macOS artifact
-      run: |
-        mkdir -p uploads
-        cp dist/*.dmg uploads/ 2>/dev/null || true
-        cp dist/*.pkg uploads/ 2>/dev/null || true
-
-    - name: Save macOS files
-      run: |
-        tar -czf macos-files.tar.gz uploads/
-
-  create-release:
-    needs: [build-linux, build-windows, build-macos]
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Get version
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
-        else
-          VERSION="${{ github.ref_name }}"
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-    - name: Download all artifacts
-      run: |
-        mkdir -p downloads
-        # Download artifacts from build jobs
-        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          https://api.github.com/repos/${{ github.repository }}/actions/artifacts > artifacts.json
-        
-        # Extract download URLs and download files
-        for job in build-linux build-windows build-macos; do
-          echo "Processing $job artifacts..."
-          # This would need more complex logic to handle artifact downloads
-        done
-
-    - name: Create Release
-      run: |
-        # Create release using GitHub API
-        RELEASE_DATA=$(cat <<EOF
-        {
-          "tag_name": "v$VERSION",
-          "name": "MiBandTool $VERSION",
-          "body": "MiBandTool $VERSION\n\n## 下载\n- Linux: .AppImage 文件\n- Windows: .exe 安装程序\n- macOS: .dmg 文件",
-          "draft": false,
-          "prerelease": false
-        }
-        EOF
-        )
-        
-        RELEASE_RESPONSE=$(curl -s -X POST \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/releases \
-          -d "$RELEASE_DATA")
-        
-        RELEASE_ID=$(echo "$RELEASE_RESPONSE" | grep -o '"id": [0-9]*' | head -1 | cut -d' ' -f2)
-        echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
-
-    - name: Upload Release Assets
-      run: |
-        # Upload files from each platform
-        for file in downloads/*; do
-          if [ -f "$file" ]; then
-            curl -s -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$file" \
-              https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$(basename "$file")
-          fi
-        done
+      - name: Upload Release Artifacts
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          files: ${{ matrix.artifact_path }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
