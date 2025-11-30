@@ -52,7 +52,7 @@ jobs:
         cd dist
         zip -r MiBandTool-$VERSION.zip .
 
-    -name: Release
+    - name: Release
       uses: softprops/action-gh-release@v1
       with:
         files: dist/MiBandTool-$VERSION.zip
