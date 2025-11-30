@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小米手环表盘自定义工具</title>
+    <meta name="description" content="小米手环表盘自定义工具 - 浏览、下载、上传和管理表盘资源">
+
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Top App Bar -->
+    <header class="top-app-bar">
+        <div class="app-bar-container">
+            <button class="icon-button menu-button" id="menuBtn">
+                <span class="material-icons">menu</span>
+            </button>
+            <h1 class="app-bar-title">表盘自定义工具</h1>
+
+            <div class="app-bar-actions">
+                <button class="icon-button" id="themeToggle" title="切换主题">
+                    <span class="material-icons">dark_mode</span>
+                </button>
+                <button class="icon-button" id="searchBtn" title="搜索">
+                    <span class="material-icons">search</span>
+                </button>
+                <button class="icon-button" id="userBtn" title="用户">
+                    <span class="material-icons">account_circle</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Drawer -->
+    <nav class="navigation-drawer" id="navDrawer">
+        <div class="drawer-header">
+            <h2>菜单</h2>
+        </div>
+        <div class="drawer-content">
+            <a href="#" class="drawer-item active" data-page="home">
+                <span class="material-icons">home</span>
+                <span>首页</span>
+            </a>
+            <a href="#" class="drawer-item" data-page="upload">
+                <span class="material-icons">upload</span>
+                <span>上传表盘</span>
+            </a>
+            <a href="#" class="drawer-item" data-page="myResources">
+                <span class="material-icons">folder</span>
+                <span>我的资源</span>
+            </a>
+            <div class="drawer-divider"></div>
+            <a href="#" class="drawer-item" data-page="about">
+                <span class="material-icons">info</span>
+                <span>关于</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Home Page -->
+        <div class="page active" id="homePage">
+            <!-- Device Type Filter -->
+            <div class="filter-section">
+                <h2 class="section-title">设备类型</h2>
+                <div class="chip-group" id="deviceFilter">
+                    <div class="chip active" data-device="all">
+                        <span>全部</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="sort-section">
+                <div class="sort-tabs">
+                    <button class="sort-tab active" data-sort="0">
+                        <span class="material-icons">schedule</span>
+                        <span>最新上传</span>
+                    </button>
+                    <button class="sort-tab" data-sort="1">
+                        <span class="material-icons">download</span>
+                        <span>最多下载</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Watchface Grid -->
+            <div class="watchface-grid" id="watchfaceGrid">
+                <!-- Loading indicator -->
+                <div class="loading-container">
+                    <div class="circular-progress"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                <button class="button-outlined" id="loadMoreBtn">
+                    <span>加载更多</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Upload Page -->
+        <div class="page" id="uploadPage">
+            <div class="upload-container">
+                <h2 class="page-title">上传表盘</h2>
+                <div id="editInfo"
+                    style="display: none; margin-bottom: 16px; padding: 12px; background-color: var(--md-sys-color-surface-variant); border-radius: 8px;">
+                    <p style="margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 14px;">
+                        正在编辑资源ID: <span id="editingResourceId" style="font-weight: 500;"></span>
+                    </p>
+                </div>
+
+                <div class="upload-section">
+                    <!-- File Upload -->
+                    <div class="upload-area" id="uploadArea">
+                        <span class="material-icons upload-icon">cloud_upload</span>
+                        <h3>拖拽表盘文件到这里</h3>
+                        <p id="uploadAreaText">或点击选择文件</p>
+                        <input type="file" id="binFileInput" accept=".bin" hidden>
+                        <button class="button-filled" id="selectFileBtn"
+                            onclick="document.getElementById('binFileInput').click()">
+                            选择文件
+                        </button>
+                    </div>
+
+                    <!-- Preview Images Upload -->
+                    <div class="preview-upload-section">
+                        <h3>预览图片</h3>
+                        <div class="preview-grid">
+                            <div class="preview-upload-item">
+                                <label>主预览图</label>
+                                <input type="file" id="previewImg" accept="image/*">
+                                <div class="preview-placeholder" id="previewImgPlaceholder">
+                                    <span class="material-icons">image</span>
+                                </div>
+                            </div>
+                            <div class="preview-upload-item">
+                                <label>息屏预览图 1</label>
+                                <input type="file" id="previewImgAod" accept="image/*">
+                                <div class="preview-placeholder" id="previewImgAodPlaceholder">
+                                    <span class="material-icons">image</span>
+                                </div>
+                            </div>
+                            <div class="preview-upload-item">
+                                <label>息屏预览图 2</label>
+                                <input type="file" id="previewImgAod2" accept="image/*">
+                                <div class="preview-placeholder" id="previewImgAod2Placeholder">
+                                    <span class="material-icons">image</span>
+                                </div>
+                            </div>
+                            <div class="preview-upload-item">
+                                <label>息屏预览图 3</label>
+                                <input type="file" id="previewImgAod3" accept="image/*">
+                                <div class="preview-placeholder" id="previewImgAod3Placeholder">
+                                    <span class="material-icons">image</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Watchface Info Form -->
+                    <form class="upload-form" id="uploadForm">
+                        <div class="form-field">
+                            <label for="watchfaceName">表盘名称 *</label>
+                            <input type="text" id="watchfaceName" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="watchfaceDesc">表盘描述</label>
+                            <textarea id="watchfaceDesc" rows="4"></textarea>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="watchfaceType">设备类型 *</label>
+                            <select id="watchfaceType" required>
+                                <option value="">请选择设备类型</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field checkbox-field">
+                            <label>
+                                <input type="checkbox" id="staticPng">
+                                <span>息屏预览</span>
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="button-outlined" id="cancelUploadBtn">取消</button>
+                            <button type="submit" class="button-filled">上传表盘</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Resources Page -->
+        <div class="page" id="myResourcesPage">
+            <div class="resources-container">
+                <h2 class="page-title">我的资源</h2>
+                <div class="watchface-grid" id="myResourcesGrid">
+                    <!-- My resources will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- User Profile Page -->
+        <div class="page" id="userProfilePage">
+            <div class="profile-container">
+                <div class="profile-card">
+                    <img id="profileAvatar" src="" alt="Avatar" class="profile-avatar">
+                    <h2 id="profileNickname" class="profile-name">User</h2>
+                    <p id="profileOpenId" class="profile-id">ID: </p>
+                    <div class="profile-actions">
+                        <button class="button-filled" id="logoutBtn"
+                            style="background-color: var(--md-sys-color-error); color: var(--md-sys-color-on-error);">
+                            <span class="material-icons">logout</span>
+                            退出登录
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Page -->
+        <div class="page" id="aboutPage">
+            <div class="about-container">
+                <h2 class="page-title">关于</h2>
+                <div class="about-content">
+                    <h3>小米手环表盘自定义工具</h3>
+                    <p>版本: 1.0.0</p>
+                    <p>这是一个基于 MiBandTool API 的表盘自定义工具网页版。</p>
+                    <p>支持浏览、下载、上传和管理表盘资源。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab" id="uploadFab" title="上传表盘">
+        <span class="material-icons">add</span>
+    </button>
+
+    <!-- Dialogs -->
+    <!-- Login Dialog -->
+    <div class="dialog-overlay" id="loginDialog">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>登录</h3>
+                <button class="icon-button" onclick="closeDialog('loginDialog')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <p>请使用米坛账号登录</p>
+                <button class="button-filled" id="mitanLoginBtn" style="width: 100%; margin-bottom: 16px;">
+                    <span>打开米坛登录</span>
+                </button>
+
+                <div style="text-align: center; margin: 16px 0; color: var(--md-sys-color-on-surface-variant);">
+                    将登陆后链接中的code复制到下方
+                </div>
+
+                <div class="form-field">
+                    <label for="authCodeInput">输入授权码</label>
+                    <input type="text" id="authCodeInput" placeholder="请输入从米坛获取的授权码">
+                </div>
+
+                <button class="button-filled" id="submitCodeBtn" style="width: 100%;">
+                    <span>提交授权码</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watchface Detail Dialog -->
+    <div class="dialog-overlay" id="detailDialog">
+        <div class="dialog dialog-large">
+            <div class="dialog-header">
+                <h3 id="detailTitle">表盘详情</h3>
+                <button class="icon-button" onclick="closeDialog('detailDialog')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="dialog-content" id="detailContent">
+                <!-- Detail content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div class="snackbar" id="snackbar">
+        <span id="snackbarMessage"></span>
+    </div>
+
+    <!-- Backdrop for drawer -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

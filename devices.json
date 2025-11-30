@@ -1,0 +1,74 @@
+{
+    "mi7": {
+        "name": "小米手环7",
+        "codename": "mi7",
+        "chip": "bes",
+        "fetch": false
+    },
+    "mi8": {
+        "name": "小米手环8",
+        "codename": "mi8",
+        "chip": "bes",
+        "fetch": false
+    },
+    "mi7pro": {
+        "name": "小米手环7pro",
+        "codename": "mi7pro",
+        "chip": "bes",
+        "fetch": false
+    },
+    "mi8pro": {
+        "name": "小米手环8pro",
+        "codename": "mi8pro",
+        "chip": "bes",
+        "fetch": false
+    },
+    "ws3": {
+        "name": "小米手环S3/S4 Sport",
+        "codename": "ws3",
+        "chip": "bes",
+        "fetch": false
+    },
+    "rw4": {
+        "name": "红米手表4",
+        "codename": "rw4",
+        "chip": "bes",
+        "fetch": false
+    },
+    "N66": {
+        "name": "小米手环9",
+        "codename": "N66",
+        "chip": "bes",
+        "fetch": false
+    },
+    "N67": {
+        "name": "小米手环9pro",
+        "codename": "N67",
+        "chip": "bes",
+        "fetch": false
+    },
+    "O62": {
+        "name": "小米手表S4",
+        "codename": "O62",
+        "chip": "bes",
+        "fetch": false
+    },
+    "o65": {
+        "name": "红米手表5",
+        "codename": "o65",
+        "chip": "bes",
+        "fetch": false
+    },
+    "o66": {
+        "name": "小米手环10",
+        "codename": "o66",
+        "chip": "bes",
+        "fetch": false
+    },
+    "p65": {
+        "name": "红米手表6",
+        "codename": "p65",
+        "chip": "bes",
+        "fetch": false
+    }
+}
