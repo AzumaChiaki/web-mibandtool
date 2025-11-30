@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小米手环表盘自定义工具</title>
     <meta name="description" content="小米手环表盘自定义工具 - 浏览、下载、上传和管理表盘资源">
@@ -12,7 +13,7 @@
     <!-- Roboto Font -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="public/css/styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
@@ -262,9 +263,16 @@
             </div>
             <div class="dialog-content">
                 <p>请使用米坛账号登录</p>
-                <button class="button-filled" id="mitanLoginBtn" style="width: 100%; margin-bottom: 16px;">
-                    <span>打开米坛登录</span>
-                </button>
+                
+                <div class="login-options">
+                    <button class="button-filled" id="mitanLoginBtn" style="width: 100%; margin-bottom: 12px;">
+                        <span>🌐 打开米坛登录</span>
+                    </button>
+                    
+                    <button class="button-outlined" id="copyLoginLinkBtn" style="width: 100%; margin-bottom: 16px;">
+                        <span>📋 复制登录链接</span>
+                    </button>
+                </div>
 
                 <div style="text-align: center; margin: 16px 0; color: var(--md-sys-color-on-surface-variant);">
                     将登陆后链接中的code复制到下方
@@ -278,6 +286,10 @@
                 <button class="button-filled" id="submitCodeBtn" style="width: 100%;">
                     <span>提交授权码</span>
                 </button>
+                
+                <div id="copyStatus" style="margin-top: 12px; text-align: center; display: none;">
+                    <span style="color: var(--md-sys-color-primary);">✅ 登录链接已复制到剪贴板</span>
+                </div>
             </div>
         </div>
     </div>
@@ -305,7 +317,7 @@
     <!-- Backdrop for drawer -->
     <div class="backdrop" id="backdrop"></div>
 
-    <script src="public/js/app.js"></script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>
