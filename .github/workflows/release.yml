@@ -13,7 +13,10 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - name: Checkout
@@ -25,7 +28,7 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
-    - name: Install
+    - name: Install dependencies
       run: npm ci
 
     - name: Get version
@@ -35,47 +38,58 @@ jobs:
         else
           VERSION="${{ github.ref_name }}"
         fi
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: Build web app
+    - name: Build for macOS
+      if: matrix.os == 'macos-latest'
+      run: npm run dist:mac
+
+    - name: Build for Windows
+      if: matrix.os == 'windows-latest'
+      run: npm run dist:win
+
+    - name: Build for Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: npm run dist:linux
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-build
+        path: dist/
+
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get version
       run: |
-        mkdir -p dist
-        cp -r public/* dist/
-        cp index.html dist/
-        cp styles.css dist/
-        cp app.js dist/
-        cp mibandtoolapi.md dist/
-        cp devices.json dist/
-        cp LICENSE dist/
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: Create archive
-      run: |
-        cd dist
-        zip -r MiBandTool-$VERSION.zip .
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
 
-    - name: Release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/MiBandTool-$VERSION.zip
+        files: artifacts/**/*
         draft: false
         name: MiBandTool $VERSION
         body: |
           MiBandTool $VERSION
-
-    - name: Update version
-      run: |
-        npm version $VERSION --no-git-tag-version
-        git add package.json
-        git commit -m "v$VERSION"
-        git tag v$VERSION
-        git push origin main --follow-tags
-
-    - name: Cleanup
-      run: |
-        rm -rf dist
-        rm -f MiBandTool-$VERSION.zip
-
-    - name: Clean old releases
-      run: |
-        gh release delete --tag "v*" --yes || true
-        git tag -d "v*" || true
-        git push origin --tags --force
+          
+          ## 下载
+          - macOS: .dmg 文件
+          - Windows: .exe 安装程序
+          - Linux: .AppImage 文件
