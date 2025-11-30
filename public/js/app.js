@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load devices configuration
 async function loadDevicesConfig() {
     try {
-        const response = await fetch('devices.json');
+        const response = await fetch('public/assets/devices.json');
         devicesConfig = await response.json();
         populateDeviceFilter();
         populateDeviceSelect();
