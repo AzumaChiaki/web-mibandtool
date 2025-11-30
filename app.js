@@ -278,7 +278,7 @@ function initializeApp() {
         if (!chip) return;
 
         const selectedDevice = chip.getAttribute('data-device');
-
+        
         // Don't do anything if clicking the already selected device
         if (selectedDevice === appState.currentDevice) {
             showSnackbar('当前已经是 ' + chip.textContent.trim());
@@ -289,16 +289,25 @@ function initializeApp() {
         document.querySelectorAll('#deviceFilter .chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
 
+        // Save search state before clearing
+        const wasSearching = appState.searchKeyword;
+        const searchKeyword = appState.searchKeyword;
+        
         // Clear all caches and saved data
         clearAllCaches();
-
+        
         // Save to localStorage
         localStorage.setItem('selectedDevice', selectedDevice);
         appState.currentDevice = selectedDevice;
-
+        
+        // Restore search state after clearing
+        if (wasSearching) {
+            appState.searchKeyword = searchKeyword;
+        }
+        
         // Show confirmation and reload
         showSnackbar(`已切换到 ${chip.textContent.trim()}，正在刷新页面...`);
-
+        
         // Force reload with cache busting
         setTimeout(() => {
             const timestamp = new Date().getTime();
@@ -312,11 +321,21 @@ function initializeApp() {
             document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
+            const wasSearching = appState.searchKeyword;
+            const searchKeyword = appState.searchKeyword;
+            
             appState.currentSort = parseInt(tab.getAttribute('data-sort'));
             appState.currentPage = 1;
             appState.watchfaces = [];
-            appState.searchKeyword = ''; // Clear search when changing sort
-            loadWatchfaces();
+            
+            // Preserve search state if there was one
+            if (wasSearching) {
+                appState.searchKeyword = searchKeyword;
+                searchWatchfaces();
+            } else {
+                appState.searchKeyword = '';
+                loadWatchfaces();
+            }
         });
     });
 
@@ -400,6 +419,11 @@ function initializeApp() {
         loginWithMitan();
     });
 
+    const copyLoginLinkBtn = document.getElementById('copyLoginLinkBtn');
+    copyLoginLinkBtn.addEventListener('click', async () => {
+        await copyLoginLink();
+    });
+
     const submitCodeBtn = document.getElementById('submitCodeBtn');
     submitCodeBtn.addEventListener('click', async () => {
         const code = document.getElementById('authCodeInput').value.trim();
@@ -458,12 +482,24 @@ function navigateToPage(pageName) {
         }
         updateUserUI();
     } else if (pageName === 'home') {
-        // Always reset and load when navigating to home
-        appState.currentPage = 1;
-        appState.watchfaces = [];
-        appState.hasMore = true;
-        appState.searchKeyword = '';
-        loadWatchfaces();
+        // Check if we should preserve search state
+        const preserveSearch = appState.searchKeyword && appState.currentPageName === 'home';
+        
+        if (!preserveSearch) {
+            // Only reset if not in search mode or coming from other page
+            appState.currentPage = 1;
+            appState.watchfaces = [];
+            appState.hasMore = true;
+            appState.searchKeyword = '';
+            loadWatchfaces();
+        } else {
+            // Preserve search state, just refresh current search results
+            console.log('保持搜索状态，关键词:', appState.searchKeyword);
+            appState.currentPage = 1;
+            appState.watchfaces = [];
+            appState.hasMore = true;
+            searchWatchfaces();
+        }
     }
 }
 
@@ -601,6 +637,60 @@ function loginWithMitan() {
     });
 
     showSnackbar('请在新窗口中完成登录');
+}
+
+// Copy login link to clipboard
+async function copyLoginLink() {
+    const authUrl = 'https://www.bandbbs.cn/oauth2/authorize?type=authorization_code&client_id=6253518017122039&redirect_uri=https://api.bandbbs.cn/wftools/bandbbs.html&response_type=code&scope=user:read user:write resource_check:read resource:read&state=web';
+    
+    try {
+        await navigator.clipboard.writeText(authUrl);
+        
+        // Show success message
+        const copyStatus = document.getElementById('copyStatus');
+        copyStatus.style.display = 'block';
+        
+        setTimeout(() => {
+            copyStatus.style.display = 'none';
+        }, 3000);
+        
+        showSnackbar('登录链接已复制到剪贴板');
+    } catch (error) {
+        console.error('复制失败:', error);
+        // Fallback method
+        fallbackCopy(authUrl);
+    }
+}
+
+// Fallback copy method
+function fallbackCopy(text) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            const copyStatus = document.getElementById('copyStatus');
+            copyStatus.style.display = 'block';
+            
+            setTimeout(() => {
+                copyStatus.style.display = 'none';
+            }, 3000);
+            
+            showSnackbar('登录链接已复制到剪贴板');
+        } else {
+            showSnackbar('复制失败，请手动复制链接');
+        }
+    } catch (error) {
+        console.error('降级复制失败:', error);
+        showSnackbar('复制失败，请手动复制链接');
+    }
 }
 
 // Process login
@@ -1486,26 +1576,26 @@ function formatTime(timestamp) {
 
 // Clear all caches and stored data
 function clearAllCaches() {
-    // Clear application state
+    // Clear application state (but preserve search keyword)
     appState.watchfaces = [];
     appState.currentPage = 1;
-    appState.searchKeyword = '';
     appState.hasMore = true;
-
-    // Clear localStorage caches (except user preferences)
+    // Don't clear searchKeyword - it will be restored after clearing
+    
+    // Clear localStorage caches (except user preferences and search state)
     const keysToKeep = ['selectedDevice', 'theme', 'openid', 'validtoken', 'nickname', 'avatar'];
     const allKeys = Object.keys(localStorage);
-
+    
     allKeys.forEach(key => {
         if (!keysToKeep.includes(key)) {
             localStorage.removeItem(key);
         }
     });
-
+    
     // Clear session storage
     sessionStorage.clear();
-
-    console.log('All caches cleared');
+    
+    console.log('All caches cleared (search state preserved)');
 }
 
 // Edit watchface - load existing data into upload form
