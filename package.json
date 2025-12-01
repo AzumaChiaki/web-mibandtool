@@ -27,16 +27,22 @@
       "target": "dmg",
       "category": "public.app-category.utilities",
       "identity": null,
-      "icon": "build/icon.icns"
+      "icon": "favicon.png"
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.png"
+      "icon": "favicon.png"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "build/icon.png"
-    }
+      "icon": "favicon.png"
+    },
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!node_modules/*",
+      "node_modules/express/**/*"
+    ]
   },
   "repository": {
     "type": "git",
