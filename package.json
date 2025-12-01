@@ -17,6 +17,12 @@
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!node_modules/*",
+      "node_modules/express/**/*"
+    ],
     "mac": {
       "target": "dmg",
       "category": "public.app-category.utilities",
