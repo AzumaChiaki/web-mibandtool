@@ -32,11 +32,16 @@
    npm install
    ```
 
-2. **构建打包 (Mac)**
-   ```bash
-   npm run dist
-   ```
-   *注意：如果遇到签名卡住的问题，请在 `package.json` 的 `build.mac` 中设置 `"identity": null`。*
+2. **构建打包**
+   
+   **macOS:**
+   npm run dist:mac
+      **Windows:**sh
+   npm run dist:win
+      **Linux:**
+   
+   npm run dist:linux
+      *注意：如果遇到签名卡住的问题，请在 `package.json` 的 `build.mac` 中设置 `"identity": null`。*
 
 3. **获取安装包**
    打包完成后，在 `dist/` 文件夹中查找 `.dmg` 文件。
